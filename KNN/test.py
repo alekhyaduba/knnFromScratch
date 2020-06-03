@@ -1,3 +1,3 @@
-from KNN import KNN_algorithm
+from KNN import knn_algorithm
 
-print(KNN_algorithm("iris.csv","test_file.csv",3))
+print(*knn_algorithm("iris.csv", 5),sep='\n')

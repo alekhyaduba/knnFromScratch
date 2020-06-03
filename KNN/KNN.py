@@ -1,4 +1,5 @@
 from csv import reader
+import random
 
 
 def load_input_csv(filename):
@@ -31,6 +32,22 @@ def convert_to_float(dataset, column):
     for row in dataset:
         row[column] = float(row[column].strip())
     return dataset
+
+
+def split_data(dataset, test_size):
+    """
+    Splits the input data into training and test data based on the test size
+    :param dataset: Input dataset
+    :param test_size: The size of test set(in range(0-1))
+    :return: training data and test data
+    """
+
+    split = int(len(dataset) * (1 - test_size))
+    random.shuffle(dataset)
+
+    train_data = dataset[:split]
+    test_data = dataset[split:]
+    return train_data, test_data
 
 
 def get_class_lookup(dataset):
@@ -102,7 +119,24 @@ def predict_class(data_set, test_row, k):
     return max_class
 
 
-def KNN_algorithm(data_filename, test_file, k):
+def calculate_predict_accuracy(prediction_results):
+    """
+    Calculates the accuracy of the prediction
+    :param prediction_results: The results obtained from the knn_algorithm test
+    :return: accuracy
+    """
+    total = len(prediction_results)
+    correct = 0
+    for row in prediction_results:
+        original_class = row[0][-1]
+        predicted_class = row[1]
+        if original_class == predicted_class:
+            correct += 1
+    accuracy = correct * 100 / total
+    return accuracy
+
+
+def knn_algorithm(data_filename, k):
     '''
     Implements the KNN algorithm for the given
     :param data_filename: Input data
@@ -117,14 +151,42 @@ def KNN_algorithm(data_filename, test_file, k):
 
     for i in range(n_columns - 1):
         dataset = convert_to_float(dataset, i)
+
+    train_data, test_data = split_data(dataset, 0.2)
+    lookup = get_class_lookup(train_data)
+
+    for row in test_data:
+        res = predict_class(train_data, row, k)
+        result.append((row, lookup[res]))
+    accuracy=calculate_predict_accuracy(result)
+
+    return result,accuracy
+
+
+def knn_predict(data_filename, test_filename, k):
+    '''
+    Implements the KNN algorithm for the given
+    :param data_filename: Input data
+    :param test_file: Test file containing the points for which class is to be determined
+    :param k: number of neighbors
+    :return: A tuple of test data, predicted class
+    '''
+    result = []
+    dataset = load_input_csv(data_filename)
+    n_columns = len(dataset[0])
+    print(f"Loaded file {data_filename} with {len(dataset)} rows and {len(dataset[0])} columns")
+
+    for i in range(n_columns - 1):
+        dataset = convert_to_float(dataset, i)
+
+    test_data = load_input_csv(test_filename)
+
+    for i in range(n_columns - 1):
+        test_data = convert_to_float(test_data, i)
+
     lookup = get_class_lookup(dataset)
 
-    test_input = load_input_csv(test_file)
-
-    for j in range(len(test_input[0])):
-        test_input = convert_to_float(test_input, j)
-
-    for row in test_input:
+    for row in test_data:
         res = predict_class(dataset, row, k)
         result.append((row, lookup[res]))
 
